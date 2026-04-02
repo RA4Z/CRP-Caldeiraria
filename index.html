@@ -1,0 +1,1845 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRP — Painel Gerencial Caldeiraria</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script src="data.js"></script>
+    <script src="charts.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --bg: #f7f8fc;
+            --bg-card: #fff;
+            --bg-sidebar: #0f172a;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e8edf5;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
+            --shadow-md: 0 4px 16px rgba(15, 23, 42, .08), 0 2px 6px rgba(15, 23, 42, .04);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --sidebar-w: 240px;
+            --header-h: 68px;
+            --accent: #1a56db;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            z-index: 100
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 28px 24px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #1a56db, #7c3aed);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px
+        }
+
+        .logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff
+        }
+
+        .logo-sub {
+            font-size: 10px;
+            color: rgba(255, 255, 255, .4);
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            font-weight: 500
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow-y: auto
+        }
+
+        .nav-section {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, .3);
+            padding: 12px 12px 6px;
+            margin-top: 8px
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 9px;
+            color: rgba(255, 255, 255, .55);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, .07);
+            color: rgba(255, 255, 255, .9)
+        }
+
+        .nav-item.active {
+            background: rgba(26, 86, 219, .25);
+            color: #7aadff;
+            font-weight: 600
+        }
+
+        .nav-item .nav-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .sidebar-bottom {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, .08);
+            font-size: 11px;
+            color: rgba(255, 255, 255, .25);
+            text-align: center
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column
+        }
+
+        .header {
+            height: var(--header-h);
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 50
+        }
+
+        .header-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary)
+        }
+
+        .header-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px
+        }
+
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #065f46
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #059669;
+            animation: pulse 2s infinite
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: .7
+            }
+        }
+
+        /* FILTER BAR */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm)
+        }
+
+        .filter-bar-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-muted);
+            margin-right: 4px;
+            flex-shrink: 0
+        }
+
+        .filter-bar-sep {
+            width: 1px;
+            height: 24px;
+            background: var(--border);
+            flex-shrink: 0
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 6px 12px
+        }
+
+        .filter-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        .filter-select {
+            border: none;
+            background: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none
+        }
+
+        .filter-reset-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-muted);
+            background: var(--bg);
+            transition: all .15s;
+            white-space: nowrap
+        }
+
+        .filter-reset-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: #ebf2ff
+        }
+
+        /* PAGES */
+        .page {
+            display: none;
+            padding: 32px;
+            flex: 1;
+            animation: fadeSlide .35s ease
+        }
+
+        .page.active {
+            display: block
+        }
+
+        @keyframes fadeSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px
+        }
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 20px
+        }
+
+        /* KPI */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow .2s, transform .2s
+        }
+
+        .kpi-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px)
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--card-accent, #1a56db);
+            border-radius: var(--radius) var(--radius) 0 0
+        }
+
+        .kpi-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-muted)
+        }
+
+        .kpi-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: var(--card-icon-bg, #ebf2ff)
+        }
+
+        .kpi-value {
+            font-family: 'DM Mono', monospace;
+            font-size: 26px;
+            font-weight: 500;
+            color: var(--text-primary);
+            line-height: 1;
+            margin-bottom: 8px;
+            letter-spacing: -.01em
+        }
+
+        .kpi-value small {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-secondary)
+        }
+
+        .kpi-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .kpi-trend.up {
+            color: #059669
+        }
+
+        .kpi-trend.down {
+            color: #dc2626
+        }
+
+        .kpi-trend.neutral {
+            color: var(--text-muted)
+        }
+
+        .kpi-sparkline {
+            height: 44px;
+            margin-top: 14px;
+            position: relative
+        }
+
+        /* CHARTS */
+        .chart-row {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 24px
+        }
+
+        .chart-row.cols-2 {
+            grid-template-columns: 1fr 1fr
+        }
+
+        .chart-row.cols-3 {
+            grid-template-columns: 1fr 1fr 1fr
+        }
+
+        .chart-row.cols-3-1 {
+            grid-template-columns: 2fr 1fr
+        }
+
+        .chart-row.full {
+            grid-template-columns: 1fr
+        }
+
+        .chart-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow .2s
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-md)
+        }
+
+        .chart-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            gap: 12px
+        }
+
+        .chart-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.3
+        }
+
+        .chart-card-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0
+        }
+
+        .chart-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 5px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: var(--bg);
+            transition: all .15s
+        }
+
+        .chart-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: #ebf2ff
+        }
+
+        .chart-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent)
+        }
+
+        .chart-wrap {
+            position: relative
+        }
+
+        .chart-wrap canvas {
+            display: block
+        }
+
+        /* TABS */
+        .centro-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 24px;
+            flex-wrap: wrap
+        }
+
+        .centro-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--bg-card);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all .2s
+        }
+
+        .centro-tab:hover,
+        .centro-tab.active {
+            border-color: var(--tab-color, #1a56db);
+            background: var(--tab-bg, #ebf2ff);
+            color: var(--tab-color, #1a56db)
+        }
+
+        .tab-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--tab-color, #1a56db)
+        }
+
+        /* HEATMAP */
+        .heatmap-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        .heatmap-table th {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 8px 10px;
+            white-space: nowrap
+        }
+
+        .heatmap-table th:first-child {
+            text-align: left;
+            min-width: 220px
+        }
+
+        .heatmap-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 8px 12px 0;
+            white-space: nowrap
+        }
+
+        .heatmap-label small {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400
+        }
+
+        .heatmap-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        .heatmap-cell {
+            text-align: center;
+            padding: 12px 8px;
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: transform .15s, box-shadow .15s;
+            cursor: default
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.08);
+            box-shadow: var(--shadow-md);
+            z-index: 1;
+            position: relative
+        }
+
+        /* TABLE */
+        .data-table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border)
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 700px
+        }
+
+        .data-table thead th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            transition: color .15s
+        }
+
+        .data-table thead th:hover {
+            color: var(--accent)
+        }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background .15s
+        }
+
+        .data-table tbody tr:hover {
+            background: #f8fafc
+        }
+
+        .data-table tbody tr:last-child {
+            border-bottom: none
+        }
+
+        .data-table tbody td {
+            padding: 12px 16px;
+            color: var(--text-primary);
+            vertical-align: middle
+        }
+
+        .data-table tbody td.mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 12.5px
+        }
+
+        .badge-cent {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 9px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .03em
+        }
+
+        .mini-bar-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .mini-bar-bg {
+            flex: 1;
+            height: 5px;
+            background: #f1f5f9;
+            border-radius: 99px;
+            overflow: hidden;
+            max-width: 120px
+        }
+
+        .mini-bar {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .5s
+        }
+
+        /* TOOLBAR */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap
+        }
+
+        .toolbar-left,
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            padding: 9px 14px;
+            transition: border-color .2s;
+            max-width: 300px;
+            width: 100%
+        }
+
+        .search-bar:focus-within {
+            border-color: var(--accent);
+            background: #fff
+        }
+
+        .search-input {
+            border: none;
+            background: none;
+            outline: none;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            color: var(--text-primary);
+            width: 100%
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted)
+        }
+
+        .summary-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 10px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            min-width: 100px;
+            text-align: center
+        }
+
+        .summary-stat-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary)
+        }
+
+        .summary-stat-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .06em
+        }
+
+        /* PROGRESS */
+        .progress-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px
+        }
+
+        .progress-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px
+        }
+
+        .progress-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between
+        }
+
+        .progress-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary)
+        }
+
+        .progress-name small {
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-left: 4px
+        }
+
+        .progress-val {
+            font-family: 'DM Mono', monospace;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: var(--text-secondary)
+        }
+
+        .progress-bg {
+            height: 7px;
+            background: var(--bg);
+            border-radius: 99px;
+            overflow: hidden;
+            border: 1px solid var(--border)
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: var(--fill-color, #1a56db);
+            transition: width .8s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        /* MISC */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8
+        }
+
+        @media(max-width:1100px) {
+
+            .chart-row.cols-2,
+            .chart-row.cols-3,
+            .chart-row.cols-3-1 {
+                grid-template-columns: 1fr
+            }
+        }
+
+        @media(max-width:768px) {
+            :root {
+                --sidebar-w: 0px
+            }
+
+            .sidebar {
+                transform: translateX(-240px)
+            }
+
+            .main {
+                margin-left: 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">🏭</div>
+            <div class="logo-text"><span class="logo-title">CRP</span><span class="logo-sub">Painel Gerencial</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <span class="nav-section">Dashboards</span>
+            <button class="nav-item active" onclick="showPage('overview')"><span class="nav-icon">📊</span> Visão
+                Geral</button>
+            <button class="nav-item" onclick="showPage('centros')"><span class="nav-icon">🏗️</span> Por Centro</button>
+            <button class="nav-item" onclick="showPage('comparativo')"><span class="nav-icon">📈</span>
+                Comparativo</button>
+            <button class="nav-item" onclick="showPage('ranking')"><span class="nav-icon">🏆</span> Ranking
+                CenTrab</button>
+            <span class="nav-section">Análises</span>
+            <button class="nav-item" onclick="showPage('heatmap')"><span class="nav-icon">🌡️</span> Mapa de
+                Calor</button>
+            <button class="nav-item" onclick="showPage('variacao')"><span class="nav-icon">⚡</span> Variação
+                Semanal</button>
+            <button class="nav-item" onclick="showPage('capacidade')"><span class="nav-icon">⚙️</span> Utilização
+                Cap.</button>
+            <button class="nav-item" onclick="showPage('tabela')"><span class="nav-icon">📋</span> Dados
+                Detalhados</button>
+        </nav>
+        <div class="sidebar-bottom">Semanas 14–19 / 2026</div>
+    </aside>
+    <div class="main">
+        <header class="header">
+            <div class="header-left">
+                <div class="header-title" id="headerTitle">Visão Geral da Caldeiraria</div>
+                <div class="header-sub" id="headerSub">Semanas 14–19 · 4 Centros · Horas + Capacidade</div>
+            </div>
+            <div class="header-right">
+                <div class="header-badge">
+                    <div class="pulse-dot"></div>Dados Atualizados
+                </div>
+            </div>
+        </header>
+
+        <!-- OVERVIEW -->
+        <div class="page active" id="page-overview">
+            <div class="page-title">Visão Geral</div>
+            <div class="page-subtitle">Consolidado de horas e capacidade · Caldeiraria 2026</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Semana</span>
+                    <select class="filter-select" id="ov-sem-filter" onchange="applyOverviewFilter()">
+                        <option value="">Todas</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Centro</span>
+                    <select class="filter-select" id="ov-cent-filter" onchange="applyOverviewFilter()">
+                        <option value="">Todos</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Modo</span>
+                    <select class="filter-select" id="ov-mode-filter" onchange="applyOverviewFilter()">
+                        <option value="all">Geral consolidado</option>
+                        <option value="per-cent">Por centro</option>
+                    </select></label>
+                <button class="filter-reset-btn" onclick="resetOverviewFilter()">✕ Limpar</button>
+            </div>
+            <div class="kpi-grid" id="kpi-grid"></div>
+            <div class="chart-row cols-3-1">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Evolução Semanal de Horas</div>
+                            <div class="chart-card-sub">Barras = horas realizadas · linha vermelha tracejada =
+                                capacidade</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:340px"><canvas id="chart-line-overview"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Distribuição</div>
+                            <div class="chart-card-sub">% de horas por centro</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:340px"><canvas id="chart-donut-centros"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-row cols-2">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Horas por Centro × Semana</div>
+                            <div class="chart-card-sub">Composição semanal empilhada por centro</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:320px"><canvas id="chart-stacked-overview"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Ranking de Centros</div>
+                            <div class="chart-card-sub">Total de horas no período completo</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:320px"><canvas id="chart-ranking-centros"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- POR CENTRO -->
+        <div class="page" id="page-centros">
+            <div class="page-title">Análise por Centro</div>
+            <div class="page-subtitle">Selecione um centro para ver detalhamento completo</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Sem. Inicial</span>
+                    <select class="filter-select" id="cent-sem-ini" onchange="renderCentroDetail(currentCentro)">
+                        <option value="">Todas</option>
+                    </select></label>
+                <label class="filter-group"><span class="filter-label">Sem. Final</span>
+                    <select class="filter-select" id="cent-sem-fin" onchange="renderCentroDetail(currentCentro)">
+                        <option value="">Todas</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Top CenTrabs</span>
+                    <select class="filter-select" id="cent-topn" onchange="renderCentroDetail(currentCentro)">
+                        <option value="5">Top 5</option>
+                        <option value="8" selected>Top 8</option>
+                        <option value="12">Top 12</option>
+                        <option value="20">Top 20</option>
+                    </select></label>
+            </div>
+            <div class="centro-tabs" id="centro-tabs"></div>
+            <div id="centro-detail-area"></div>
+        </div>
+
+        <!-- COMPARATIVO -->
+        <div class="page" id="page-comparativo">
+            <div class="page-title">Comparativo entre Centros</div>
+            <div class="page-subtitle">Análise radar e barras multi-série com linha de capacidade</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Sem. Inicial</span>
+                    <select class="filter-select" id="comp-sem-ini" onchange="renderComparativoCharts()">
+                        <option value="">Todas</option>
+                    </select></label>
+                <label class="filter-group"><span class="filter-label">Sem. Final</span>
+                    <select class="filter-select" id="comp-sem-fin" onchange="renderComparativoCharts()">
+                        <option value="">Todas</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Centros</span>
+                    <select class="filter-select" id="comp-cent-filter" onchange="renderComparativoCharts()">
+                        <option value="all">Todos</option>
+                        <option value="1200">1200</option>
+                        <option value="1201">1201</option>
+                        <option value="3201">3201</option>
+                        <option value="6200">6200</option>
+                    </select></label>
+            </div>
+            <div class="chart-row full">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Radar Comparativo de Centros</div>
+                            <div class="chart-card-sub">Intensidade relativa por semana — valores normalizados 0–100
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:440px"><canvas id="chart-radar"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-row full">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Horas por Semana — Comparativo + Capacidade</div>
+                            <div class="chart-card-sub">Barras agrupadas + linha de capacidade tracejada por centro
+                            </div>
+                        </div>
+                        <div class="chart-actions">
+                            <button class="chart-btn active" id="btn-toggle-1200"
+                                onclick="toggleCentroLine('1200',this)">1200</button>
+                            <button class="chart-btn active" id="btn-toggle-1201"
+                                onclick="toggleCentroLine('1201',this)">1201</button>
+                            <button class="chart-btn active" id="btn-toggle-3201"
+                                onclick="toggleCentroLine('3201',this)">3201</button>
+                            <button class="chart-btn active" id="btn-toggle-6200"
+                                onclick="toggleCentroLine('6200',this)">6200</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:380px"><canvas id="chart-multi-line"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RANKING -->
+        <div class="page" id="page-ranking">
+            <div class="page-title">Ranking de Centros de Trabalho</div>
+            <div class="page-subtitle">Top performers e maiores consumidores de horas</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Centro</span>
+                    <select class="filter-select" id="ranking-cent-select" onchange="renderRankingPage()">
+                        <option value="1200">1200 – JGS</option>
+                        <option value="1201">1201 – SBC</option>
+                        <option value="3201">3201 – WEM</option>
+                        <option value="6200">6200 – WII</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Top N</span>
+                    <select class="filter-select" id="ranking-topn-select" onchange="renderRankingPage()">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Semana</span>
+                    <select class="filter-select" id="ranking-sem-filter" onchange="renderRankingPage()">
+                        <option value="">Todas</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Ordenar</span>
+                    <select class="filter-select" id="ranking-sort" onchange="renderRankingPage()">
+                        <option value="horas">Horas desc.</option>
+                        <option value="az">Nome A→Z</option>
+                    </select></label>
+            </div>
+            <div class="chart-row cols-2">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Top CenTrabs por Horas</div>
+                            <div class="chart-card-sub" id="ranking-subtitle">Horas acumuladas</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:440px"><canvas id="chart-top-centrab"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Participação Percentual</div>
+                            <div class="chart-card-sub">Distribuição dos top CenTrabs</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:440px"><canvas id="chart-top-centrab-donut"></canvas></div>
+                </div>
+            </div>
+            <div class="chart-row full">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Evolução Semanal — Top CenTrabs</div>
+                            <div class="chart-card-sub">Barras empilhadas + linha de capacidade</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:340px"><canvas id="chart-ranking-stacked"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEATMAP -->
+        <div class="page" id="page-heatmap">
+            <div class="page-title">Mapa de Calor</div>
+            <div class="page-subtitle">Intensidade de horas por centro e semana</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Centro</span>
+                    <select class="filter-select" id="heatmap-cent-filter" onchange="renderHeatmapPage(true)">
+                        <option value="">Todos</option>
+                        <option value="1200">1200</option>
+                        <option value="1201">1201</option>
+                        <option value="3201">3201</option>
+                        <option value="6200">6200</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Semana ref.</span>
+                    <select class="filter-select" id="heatmap-sem-select"
+                        onchange="renderHeatmapSemana()"></select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Escala cor</span>
+                    <select class="filter-select" id="heatmap-scale" onchange="renderHeatmapPage(true)">
+                        <option value="global">Global</option>
+                        <option value="local">Por linha</option>
+                    </select></label>
+            </div>
+            <div class="chart-card" style="margin-bottom:24px">
+                <div class="chart-card-header">
+                    <div>
+                        <div class="chart-card-title">Heatmap Centro × Semana</div>
+                        <div class="chart-card-sub">Mais escuro = maior volume · passe o mouse para detalhes</div>
+                    </div>
+                </div>
+                <div id="heatmap-container" style="overflow-x:auto"></div>
+            </div>
+            <div class="chart-row cols-2">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Participação — Semana selecionada</div>
+                            <div class="chart-card-sub">Use o filtro acima para comparar semanas</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrap" style="height:300px"><canvas id="chart-heatmap-sem"></canvas></div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <div class="chart-card-title">Progressão de Contribuição</div>
+                            <div class="chart-card-sub">Proporção acumulada por centro</div>
+                        </div>
+                    </div>
+                    <div id="progress-list-area" class="progress-list" style="margin-top:8px"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VARIAÇÃO -->
+        <div class="page" id="page-variacao">
+            <div class="page-title">Variação Semanal</div>
+            <div class="page-subtitle">Crescimento e retração de horas entre semanas</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Centro</span>
+                    <select class="filter-select" id="var-cent-filter" onchange="renderVariacaoPage(true)">
+                        <option value="">Todos</option>
+                        <option value="1200">1200</option>
+                        <option value="1201">1201</option>
+                        <option value="3201">3201</option>
+                        <option value="6200">6200</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Ordenar KPI</span>
+                    <select class="filter-select" id="var-sort" onchange="renderVariacaoPage(true)">
+                        <option value="total">Total horas</option>
+                        <option value="variacao">Variação %</option>
+                        <option value="az">Centro A→Z</option>
+                    </select></label>
+            </div>
+            <div class="kpi-grid" id="variacao-kpi-grid"></div>
+            <div id="variacao-charts-area"></div>
+        </div>
+
+        <!-- CAPACIDADE -->
+        <div class="page" id="page-capacidade">
+            <div class="page-title">Utilização de Capacidade</div>
+            <div class="page-subtitle">% utilização (horas realizadas / capacidade) por centro e semana</div>
+            <div class="filter-bar">
+                <span class="filter-bar-title">🔍 Filtros</span>
+                <label class="filter-group"><span class="filter-label">Centro</span>
+                    <select class="filter-select" id="cap-cent-filter" onchange="renderCapacidadePage(true)">
+                        <option value="">Todos</option>
+                        <option value="1200">1200</option>
+                        <option value="1201">1201</option>
+                        <option value="3201">3201</option>
+                        <option value="6200">6200</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Sem. Inicial</span>
+                    <select class="filter-select" id="cap-sem-ini" onchange="renderCapacidadePage(true)">
+                        <option value="">Todas</option>
+                    </select></label>
+                <label class="filter-group"><span class="filter-label">Sem. Final</span>
+                    <select class="filter-select" id="cap-sem-fin" onchange="renderCapacidadePage(true)">
+                        <option value="">Todas</option>
+                    </select></label>
+                <div class="filter-bar-sep"></div>
+                <label class="filter-group"><span class="filter-label">Alerta acima de</span>
+                    <select class="filter-select" id="cap-threshold" onchange="renderCapacidadePage(true)">
+                        <option value="80">80%</option>
+                        <option value="90">90%</option>
+                        <option value="100" selected>100%</option>
+                        <option value="110">110%</option>
+                    </select></label>
+            </div>
+            <div class="kpi-grid" id="cap-kpi-grid"></div>
+            <div id="cap-charts-area"></div>
+        </div>
+
+        <!-- TABELA -->
+        <div class="page" id="page-tabela">
+            <div class="page-title">Dados Detalhados</div>
+            <div class="page-subtitle">Todos os registros com filtros, ordenação e status de capacidade</div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-bar"><span style="font-size:15px;color:var(--text-muted)">🔍</span>
+                        <input class="search-input" id="table-search" placeholder="Buscar CenTrab ou Centro..."
+                            oninput="filterTable()" />
+                    </div>
+                    <label class="filter-group"><span class="filter-label">Centro</span>
+                        <select class="filter-select" id="table-cent-filter" onchange="filterTable()">
+                            <option value="">Todos</option>
+                            <option value="1200">1200</option>
+                            <option value="1201">1201</option>
+                            <option value="3201">3201</option>
+                            <option value="6200">6200</option>
+                        </select></label>
+                    <label class="filter-group"><span class="filter-label">Semana</span>
+                        <select class="filter-select" id="table-sem-filter" onchange="filterTable()">
+                            <option value="">Todas</option>
+                        </select></label>
+                    <label class="filter-group"><span class="filter-label">Horas mín.</span>
+                        <select class="filter-select" id="table-hmin-filter" onchange="filterTable()">
+                            <option value="0">Qualquer</option>
+                            <option value="10">≥10h</option>
+                            <option value="50">≥50h</option>
+                            <option value="100">≥100h</option>
+                            <option value="500">≥500h</option>
+                        </select></label>
+                    <label class="filter-group"><span class="filter-label">Capacidade</span>
+                        <select class="filter-select" id="table-cap-filter" onchange="filterTable()">
+                            <option value="">Todas</option>
+                            <option value="com">Com cap.</option>
+                            <option value="sem">Sem cap.</option>
+                            <option value="over">Acima cap.</option>
+                        </select></label>
+                    <button class="filter-reset-btn" onclick="resetTableFilter()">✕ Limpar</button>
+                </div>
+                <div class="toolbar-right">
+                    <div class="summary-stat"><span class="summary-stat-val" id="table-count">–</span><span
+                            class="summary-stat-label">Registros</span></div>
+                    <div class="summary-stat"><span class="summary-stat-val" id="table-total-h">–</span><span
+                            class="summary-stat-label">Total h</span></div>
+                    <div class="summary-stat"><span class="summary-stat-val" id="table-total-cap">–</span><span
+                            class="summary-stat-label">Cap. Total</span></div>
+                </div>
+            </div>
+            <div class="chart-card" style="padding:0">
+                <div class="data-table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('Semana')">Semana ↕</th>
+                                <th onclick="sortTable('Cent')">Centro ↕</th>
+                                <th onclick="sortTable('CenTrab')">CenTrab ↕</th>
+                                <th onclick="sortTable('tempo')">Horas ↕</th>
+                                <th onclick="sortTable('capacidade')">Capacidade ↕</th>
+                                <th>Proporção</th>
+                                <th>Status Cap.</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 'overview', currentCentro = '1200';
+        let tableData = [], tableSortKey = 'tempo', tableSortDir = -1;
+        let lineMode = 'all', centroLineVisible = {};
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => { if (n.getAttribute('onclick') === `showPage('${page}')`) n.classList.add('active'); });
+            currentPage = page;
+            const titles = {
+                overview: 'Visão Geral da Caldeiraria', centros: 'Análise por Centro', comparativo: 'Comparativo entre Centros',
+                ranking: 'Ranking CenTrab', heatmap: 'Mapa de Calor', variacao: 'Variação Semanal', capacidade: 'Utilização de Capacidade', tabela: 'Dados Detalhados'
+            };
+            document.getElementById('headerTitle').textContent = titles[page] || '';
+            const renders = {
+                overview: renderOverviewPage, centros: renderCentrosPage, comparativo: renderComparativoPage,
+                ranking: renderRankingPage, heatmap: renderHeatmapPage, variacao: renderVariacaoPage, capacidade: renderCapacidadePage, tabela: renderTabelaPage
+            };
+            if (renders[page]) renders[page]();
+        }
+        function fmtH(v) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }); }
+        function populateSemanasSelect(id, addAll = true) {
+            const sel = document.getElementById(id); if (!sel) return;
+            const cur = sel.value;
+            sel.innerHTML = (addAll ? '<option value="">Todas</option>' : '') + DataEngine.getSemanas().map(s => `<option value="${s}">${s}</option>`).join('');
+            if (cur) sel.value = cur;
+        }
+
+        // ── OVERVIEW ──────────────────────────────────────
+        let overviewRendered = false;
+        function renderOverviewPage() {
+            if (overviewRendered) return; overviewRendered = true;
+            populateSemanasSelect('ov-sem-filter');
+            DataEngine.getCentros().forEach(c => { document.getElementById('ov-cent-filter').innerHTML += `<option value="${c}">${c} – ${CENTRO_LABELS[c] || c}</option>`; });
+            const centros = DataEngine.getCentros(), semanas = DataEngine.getSemanas();
+            const totais = DataEngine.totalPorCentro(), capTotais = DataEngine.capacidadeTotalPorCentro();
+            const grandTotal = Object.values(totais).reduce((a, b) => a + b, 0);
+            const grandCap = Object.values(capTotais).reduce((a, b) => a + b, 0);
+            const config = [{ cent: '1200', icon: '🔩', label: 'Caldeiraria JGS' }, { cent: '1201', icon: '⚙️', label: 'Caldeiraria SBC' },
+            { cent: '3201', icon: '🛠️', label: 'Caldeiraria WEM' }, { cent: '6200', icon: '🏗️', label: 'Caldeiraria WII' },
+            { cent: 'all', icon: '📊', label: 'Total Geral' }];
+            document.getElementById('kpi-grid').innerHTML = config.map(({ cent, icon, label }) => {
+                const pal = PALETTE[cent] || { primary: '#1a56db', light: '#ebf2ff' };
+                const total = cent === 'all' ? grandTotal : (totais[cent] || 0);
+                const cap = cent === 'all' ? grandCap : (capTotais[cent] || 0);
+                const util = cap > 0 ? (total / cap * 100) : null;
+                const vars = cent !== 'all' ? DataEngine.variacaoSemanal(cent) : null;
+                const lastVar = vars ? vars.filter(v => v.variacao !== null).slice(-1)[0] : null;
+                const media = cent !== 'all' ? DataEngine.mediaSemanal(cent) : grandTotal / semanas.length;
+                let trendHtml = '';
+                if (lastVar) {
+                    const cls = lastVar.variacao >= 0 ? 'up' : 'down', arrow = lastVar.variacao >= 0 ? '↑' : '↓';
+                    trendHtml = `<span class="kpi-trend ${cls}">${arrow} ${Math.abs(lastVar.variacao).toFixed(1)}% últ. sem.</span>`;
+                }
+                const utilHtml = util !== null ? `<div style="margin-top:6px;font-size:11px;color:${util > 100 ? '#dc2626' : util > 80 ? '#d97706' : '#059669'};font-weight:600">⚙️ ${util.toFixed(1)}% cap. utilizada</div>` : '';
+                return `<div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+      <div class="kpi-card-header"><span class="kpi-label">${label}</span><div class="kpi-icon">${icon}</div></div>
+      <div class="kpi-value">${fmtH(total)}<small>h</small></div>
+      ${trendHtml}${utilHtml}
+      ${cent !== 'all' ? `<div class="kpi-sparkline"><canvas id="spark-${cent}"></canvas></div>` : `<div class="kpi-trend neutral" style="margin-top:8px">Média: ${fmtH(media)}h/sem</div>`}
+    </div>`;
+            }).join('');
+            config.filter(c => c.cent !== 'all').forEach(({ cent }) => ChartModule.renderSparkline(`spark-${cent}`, cent));
+            renderOverviewLine();
+            ChartModule.renderDonutCentros('chart-donut-centros');
+            renderOverviewStacked();
+            renderRankingCentrosChart();
+        }
+        function applyOverviewFilter() { lineMode = document.getElementById('ov-mode-filter').value; renderOverviewLine(); }
+        function resetOverviewFilter() {
+            document.getElementById('ov-sem-filter').value = '';
+            document.getElementById('ov-cent-filter').value = '';
+            document.getElementById('ov-mode-filter').value = 'all';
+            lineMode = 'all'; renderOverviewLine();
+        }
+        function renderOverviewLine() {
+            ChartModule.destroy('chart-line-overview');
+            const ctx = document.getElementById('chart-line-overview'); if (!ctx) return;
+            const semanas = DataEngine.getSemanas(), agg = DataEngine.agregadoPorCentroSemana(), capAgg = DataEngine.capacidadePorCentroSemana();
+            const centros = DataEngine.getCentros();
+            const cf = document.getElementById('ov-cent-filter')?.value || '';
+            const sf = document.getElementById('ov-sem-filter')?.value || '';
+            const fSems = sf ? semanas.filter(s => s === sf) : semanas;
+            const fCents = cf ? centros.filter(c => c === cf) : centros;
+            if (lineMode === 'all') {
+                const totals = fSems.map(s => fCents.reduce((sum, c) => sum + (agg[c]?.[s] || 0), 0));
+                const caps = fSems.map(s => fCents.reduce((sum, c) => sum + (capAgg[c]?.[s] || 0), 0));
+                ChartModule.instances['chart-line-overview'] = new Chart(ctx, {
+                    data: {
+                        labels: fSems, datasets: [
+                            { type: 'bar', label: 'Total Horas', data: totals.map(v => parseFloat(v.toFixed(2))), backgroundColor: '#1a56dbcc', borderWidth: 0, borderRadius: 6, order: 1 },
+                            { type: 'line', label: 'Capacidade Total', data: caps.map(v => parseFloat(v.toFixed(2))), borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 2.5, borderDash: [6, 4], pointRadius: 4, pointBackgroundColor: '#ef4444', pointBorderColor: '#fff', pointBorderWidth: 2, tension: 0.3, order: 0 }
+                        ]
+                    }, options: { ...ChartModule.globalOptions(), plugins: { ...ChartModule.globalOptions().plugins, tooltip: { ...ChartModule.globalOptions().plugins.tooltip, mode: 'index' } } }
+                });
+            } else {
+                const datasets = [];
+                fCents.forEach((c, i) => {
+                    const pal = PALETTE[c] || { primary: COLORS_SERIES[i] };
+                    datasets.push({ type: 'bar', label: c, data: fSems.map(s => parseFloat((agg[c]?.[s] || 0).toFixed(2))), backgroundColor: pal.primary + 'bb', borderWidth: 0, borderRadius: 4, order: i + 1 });
+                    datasets.push({ type: 'line', label: `Cap.${c}`, data: fSems.map(s => parseFloat((capAgg[c]?.[s] || 0).toFixed(2))), borderColor: pal.primary, backgroundColor: 'transparent', borderWidth: 2, borderDash: [5, 3], pointRadius: 3, pointBackgroundColor: pal.primary, tension: 0.3, order: 0 });
+                });
+                ChartModule.instances['chart-line-overview'] = new Chart(ctx, { data: { labels: fSems, datasets }, options: { ...ChartModule.globalOptions(), plugins: { ...ChartModule.globalOptions().plugins, tooltip: { ...ChartModule.globalOptions().plugins.tooltip, mode: 'index' } } } });
+            }
+        }
+        function renderOverviewStacked() {
+            ChartModule.destroy('chart-stacked-overview');
+            const ctx = document.getElementById('chart-stacked-overview'); if (!ctx) return;
+            const semanas = DataEngine.getSemanas(), centros = DataEngine.getCentros(), agg = DataEngine.agregadoPorCentroSemana();
+            ChartModule.instances['chart-stacked-overview'] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: semanas, datasets: centros.map((c, i) => ({ label: `${c} – ${CENTRO_LABELS[c] || c}`, data: semanas.map(s => parseFloat((agg[c]?.[s] || 0).toFixed(2))), backgroundColor: COLORS_SERIES[i] + 'cc', borderWidth: 0, borderRadius: i === centros.length - 1 ? 6 : 0 })) },
+                options: { ...ChartModule.globalOptions(), scales: { x: { ...ChartModule.globalOptions().scales.x, stacked: true }, y: { ...ChartModule.globalOptions().scales.y, stacked: true } }, plugins: { ...ChartModule.globalOptions().plugins, tooltip: { ...ChartModule.globalOptions().plugins.tooltip, mode: 'index' } } }
+            });
+        }
+        function renderRankingCentrosChart() {
+            ChartModule.destroy('chart-ranking-centros');
+            const ctx = document.getElementById('chart-ranking-centros'); if (!ctx) return;
+            const totais = DataEngine.totalPorCentro(), sorted = Object.entries(totais).sort((a, b) => b[1] - a[1]);
+            ChartModule.instances['chart-ranking-centros'] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: sorted.map(([c]) => c), datasets: [{ label: 'Total h', data: sorted.map(([, v]) => parseFloat(v.toFixed(2))), backgroundColor: sorted.map(([c]) => (PALETTE[c]?.primary || '#94a3b8') + 'cc'), borderWidth: 0, borderRadius: 8 }] },
+                options: { ...ChartModule.globalOptions(), indexAxis: 'y', plugins: { ...ChartModule.globalOptions().plugins, legend: { display: false } } }
+            });
+        }
+
+        // ── CENTROS ──────────────────────────────────────
+        let centrosPageRendered = false;
+        function renderCentrosPage() {
+            if (centrosPageRendered) return; centrosPageRendered = true;
+            populateSemanasSelect('cent-sem-ini'); populateSemanasSelect('cent-sem-fin');
+            DataEngine.getCentros().forEach(c => { centroLineVisible[c] = true; });
+            const tabs = document.getElementById('centro-tabs');
+            tabs.innerHTML = DataEngine.getCentros().map(c => {
+                const pal = PALETTE[c] || { primary: '#1a56db', light: '#ebf2ff' };
+                return `<button class="centro-tab ${c === currentCentro ? 'active' : ''}" style="--tab-color:${pal.primary};--tab-bg:${pal.light}" onclick="selectCentro('${c}')"><span class="tab-dot"></span>${c} &nbsp;·&nbsp; ${CENTRO_LABELS[c] || c}</button>`;
+            }).join('');
+            renderCentroDetail(currentCentro);
+        }
+        function selectCentro(cent) {
+            currentCentro = cent;
+            document.querySelectorAll('.centro-tab').forEach(t => t.classList.toggle('active', t.textContent.includes(cent)));
+            renderCentroDetail(cent);
+        }
+        function renderCentroDetail(cent) {
+            const pal = PALETTE[cent] || { primary: '#1a56db', light: '#ebf2ff' };
+            const area = document.getElementById('centro-detail-area');
+            const totais = DataEngine.totalPorCentro(), capTotais = DataEngine.capacidadeTotalPorCentro();
+            const media = DataEngine.mediaSemanal(cent), topN = parseInt(document.getElementById('cent-topn')?.value || '8');
+            const total = totais[cent] || 0, cap = capTotais[cent] || 0, util = cap > 0 ? (total / cap * 100) : null;
+            area.innerHTML = `
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+        <div class="kpi-card-header"><span class="kpi-label">Total no Período</span><div class="kpi-icon">⏱️</div></div>
+        <div class="kpi-value">${fmtH(total)}<small>h</small></div>
+      </div>
+      <div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+        <div class="kpi-card-header"><span class="kpi-label">Capacidade Total</span><div class="kpi-icon">⚙️</div></div>
+        <div class="kpi-value">${fmtH(cap)}<small>h</small></div>
+      </div>
+      <div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+        <div class="kpi-card-header"><span class="kpi-label">Média / Semana</span><div class="kpi-icon">📅</div></div>
+        <div class="kpi-value">${fmtH(media)}<small>h</small></div>
+      </div>
+      <div class="kpi-card" style="--card-accent:${util > 100 ? '#dc2626' : util > 80 ? '#d97706' : pal.primary};--card-icon-bg:${pal.light}">
+        <div class="kpi-card-header"><span class="kpi-label">Utilização Cap.</span><div class="kpi-icon">📈</div></div>
+        <div class="kpi-value" style="font-size:22px;color:${util > 100 ? '#dc2626' : util > 80 ? '#d97706' : '#059669'}">${util !== null ? util.toFixed(1) + '%' : '–'}</div>
+      </div>
+    </div>
+    <div class="chart-row cols-2">
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-card-title">Evolução Semanal — Centro ${cent}</div><div class="chart-card-sub">Barras = horas · linha vermelha = capacidade</div></div></div>
+        <div class="chart-wrap" style="height:320px"><canvas id="cent-line-${cent}"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-card-title">Top ${topN} CenTrabs</div><div class="chart-card-sub">Maiores consumidores de horas</div></div></div>
+        <div class="chart-wrap" style="height:320px"><canvas id="cent-top-${cent}"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-row full">
+      <div class="chart-card">
+        <div class="chart-card-header"><div><div class="chart-card-title">Composição CenTrab × Semana</div><div class="chart-card-sub">Top ${topN} empilhados + linha de capacidade total</div></div></div>
+        <div class="chart-wrap" style="height:360px"><canvas id="cent-stacked-${cent}"></canvas></div>
+      </div>
+    </div>`;
+            setTimeout(() => {
+                ChartModule.renderLineCentro(`cent-line-${cent}`, cent);
+                ChartModule.renderTopCenTrab(`cent-top-${cent}`, cent, topN);
+                ChartModule.renderStackedCenTrab(`cent-stacked-${cent}`, cent, topN);
+            }, 50);
+        }
+
+        // ── COMPARATIVO ───────────────────────────────────
+        let comparativoRendered = false;
+        function renderComparativoPage() {
+            if (comparativoRendered) return; comparativoRendered = true;
+            populateSemanasSelect('comp-sem-ini'); populateSemanasSelect('comp-sem-fin');
+            DataEngine.getCentros().forEach(c => { centroLineVisible[c] = true; const btn = document.getElementById(`btn-toggle-${c}`); if (btn) btn.classList.add('active'); });
+            renderComparativoCharts();
+        }
+        function renderComparativoCharts() { ChartModule.renderRadar('chart-radar'); renderMultiLine(); }
+        function renderMultiLine() {
+            const visible = { ...centroLineVisible };
+            const cf = document.getElementById('comp-cent-filter')?.value || 'all';
+            if (cf !== 'all') Object.keys(visible).forEach(c => { if (c !== cf) visible[c] = false; });
+            ChartModule.renderMultiLine('chart-multi-line', visible);
+        }
+        function toggleCentroLine(cent, btn) { centroLineVisible[cent] = !centroLineVisible[cent]; btn.classList.toggle('active', centroLineVisible[cent]); renderMultiLine(); }
+
+        // ── RANKING ──────────────────────────────────────
+        function renderRankingPage() {
+            const semSel = document.getElementById('ranking-sem-filter');
+            if (semSel && semSel.options.length === 1) populateSemanasSelect('ranking-sem-filter');
+            const cent = document.getElementById('ranking-cent-select')?.value || '1200';
+            const topN = parseInt(document.getElementById('ranking-topn-select')?.value || '10');
+            const semFilter = document.getElementById('ranking-sem-filter')?.value || '';
+            const sortMode = document.getElementById('ranking-sort')?.value || 'horas';
+            document.getElementById('ranking-subtitle').textContent = `${CENTRO_LABELS[cent] || cent} · Top ${topN}`;
+            let raw = DataEngine.getRaw().filter(d => d.Cent === cent);
+            if (semFilter) raw = raw.filter(d => d.Semana === semFilter);
+            const totais = {}; raw.forEach(d => { totais[d.CenTrab] = (totais[d.CenTrab] || 0) + d.tempo; });
+            let sorted = Object.entries(totais);
+            if (sortMode === 'horas') sorted.sort((a, b) => b[1] - a[1]);
+            else sorted.sort((a, b) => a[0].localeCompare(b[0]));
+            const topList = sorted.slice(0, topN).map(([ct, total]) => ({ cenTrab: ct, total }));
+            const pal = PALETTE[cent] || PALETTE['1200'];
+            ChartModule.destroy('chart-top-centrab');
+            const ctx1 = document.getElementById('chart-top-centrab');
+            if (ctx1) ChartModule.instances['chart-top-centrab'] = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: topList.map(t => t.cenTrab), datasets: [{
+                        label: 'Horas', data: topList.map(t => parseFloat(t.total.toFixed(2))),
+                        backgroundColor: topList.map((_, i) => pal.primary + Math.round(255 * (1 - i * 0.06)).toString(16).padStart(2, '0')), borderWidth: 0, borderRadius: 6
+                    }]
+                },
+                options: { ...ChartModule.globalOptions(), indexAxis: 'y', plugins: { ...ChartModule.globalOptions().plugins, legend: { display: false } } }
+            });
+            ChartModule.destroy('chart-top-centrab-donut');
+            const ctx2 = document.getElementById('chart-top-centrab-donut');
+            if (ctx2) ChartModule.instances['chart-top-centrab-donut'] = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: topList.map(t => t.cenTrab), datasets: [{
+                        data: topList.map(t => parseFloat(t.total.toFixed(2))),
+                        backgroundColor: COLORS_SERIES.slice(0, topN).map(c => c + 'cc'), borderColor: COLORS_SERIES.slice(0, topN), borderWidth: 2, hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '65%', animation: { duration: 700 },
+                    plugins: {
+                        legend: { position: 'right', labels: { font: { family: "'DM Sans',sans-serif", size: 11 }, color: '#374151', padding: 10, usePointStyle: true } },
+                        tooltip: {
+                            backgroundColor: '#fff', titleColor: '#111827', bodyColor: '#374151', borderColor: '#e5e7eb', borderWidth: 1, padding: 12, cornerRadius: 10,
+                            callbacks: { label(ctx) { const tot = ctx.dataset.data.reduce((a, b) => a + b, 0); const pct = ((ctx.parsed / tot) * 100).toFixed(1); return ` ${Number(ctx.parsed).toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h (${pct}%)`; } }
+                        }
+                    }
+                }
+            });
+            ChartModule.renderStackedCenTrab('chart-ranking-stacked', cent, topN);
+        }
+
+        // ── HEATMAP ──────────────────────────────────────
+        let heatmapRendered = false;
+        function renderHeatmapPage(force = false) {
+            if (!heatmapRendered) {
+                heatmapRendered = true;
+                populateSemanasSelect('heatmap-sem-select', false);
+                const s = document.getElementById('heatmap-sem-select'); if (s && s.options.length > 0) s.options[0].selected = true;
+            }
+            const cf = document.getElementById('heatmap-cent-filter')?.value || '';
+            const scale = document.getElementById('heatmap-scale')?.value || 'global';
+            renderHeatmapCustom(cf, scale); renderHeatmapSemana(); renderProgressList();
+        }
+        function renderHeatmapCustom(centFilter, scale) {
+            const container = document.getElementById('heatmap-container'); if (!container) return;
+            const allC = DataEngine.getCentros(), centros = centFilter ? allC.filter(c => c === centFilter) : allC;
+            const semanas = DataEngine.getSemanas(), agg = DataEngine.agregadoPorCentroSemana();
+            let globalMax = 0; centros.forEach(c => semanas.forEach(s => { if ((agg[c]?.[s] || 0) > globalMax) globalMax = agg[c][s]; }));
+            let html = `<table class="heatmap-table"><thead><tr><th>Centro</th>${semanas.map(s => `<th>Sem ${s.split('.')[0]}</th>`).join('')}</tr></thead><tbody>`;
+            centros.forEach(cent => {
+                const pal = PALETTE[cent] || { primary: '#94a3b8' };
+                const rowMax = scale === 'local' ? Math.max(...semanas.map(s => agg[cent]?.[s] || 0)) : globalMax;
+                html += `<tr><td class="heatmap-label"><span class="heatmap-dot" style="background:${pal.primary}"></span><span>${cent}</span><small>${CENTRO_LABELS[cent] || ''}</small></td>`;
+                semanas.forEach(s => {
+                    const val = agg[cent]?.[s] || 0, intensity = rowMax > 0 ? val / rowMax : 0, alpha = Math.round(intensity * 200 + 20), bg = pal.primary + alpha.toString(16).padStart(2, '0'), tc = intensity > 0.5 ? '#fff' : '#374151';
+                    html += `<td class="heatmap-cell" style="background:${bg};color:${tc}" title="${cent} — Sem ${s}: ${val.toLocaleString('pt-BR', { minimumFractionDigits: 1 })}h">${val > 0 ? val.toLocaleString('pt-BR', { minimumFractionDigits: 0 }) : '–'}</td>`;
+                });
+                html += `</tr>`;
+            });
+            document.getElementById('heatmap-container').innerHTML = html + `</tbody></table>`;
+        }
+        function renderHeatmapSemana() {
+            ChartModule.destroy('chart-heatmap-sem');
+            const sem = document.getElementById('heatmap-sem-select')?.value || DataEngine.getSemanas()[0];
+            const ctx = document.getElementById('chart-heatmap-sem'); if (!ctx) return;
+            const agg = DataEngine.agregadoPorCentroSemana(), centros = DataEngine.getCentros();
+            ChartModule.instances['chart-heatmap-sem'] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: centros, datasets: [{
+                        label: 'Horas', data: centros.map(c => parseFloat((agg[c]?.[sem] || 0).toFixed(2))),
+                        backgroundColor: centros.map(c => (PALETTE[c]?.primary || '#94a3b8') + 'cc'), borderRadius: 8, borderWidth: 0
+                    }]
+                },
+                options: { ...ChartModule.globalOptions(), plugins: { ...ChartModule.globalOptions().plugins, legend: { display: false } } }
+            });
+        }
+        function renderProgressList() {
+            const totais = DataEngine.totalPorCentro(), maxVal = Math.max(...Object.values(totais));
+            document.getElementById('progress-list-area').innerHTML = DataEngine.getCentros().map(c => {
+                const pal = PALETTE[c] || { primary: '#94a3b8' }; const total = totais[c] || 0, pct = maxVal > 0 ? (total / maxVal * 100) : 0;
+                return `<div class="progress-item"><div class="progress-header"><div class="progress-name">${c} <small>${CENTRO_LABELS[c] || ''}</small></div><div class="progress-val">${fmtH(total)}h</div></div><div class="progress-bg"><div class="progress-fill" style="--fill-color:${pal.primary};width:${pct.toFixed(1)}%"></div></div></div>`;
+            }).join('');
+        }
+
+        // ── VARIAÇÃO ──────────────────────────────────────
+        let variacaoRendered = false;
+        function renderVariacaoPage(force = false) {
+            if (variacaoRendered && !force) return; variacaoRendered = true;
+            const cf = document.getElementById('var-cent-filter')?.value || '';
+            const sortMode = document.getElementById('var-sort')?.value || 'total';
+            let centros = DataEngine.getCentros(); if (cf) centros = centros.filter(c => c === cf);
+            const totais = DataEngine.totalPorCentro();
+            const lastVars = {}; centros.forEach(c => { const v = DataEngine.variacaoSemanal(c).filter(x => x.variacao !== null).slice(-1)[0]; lastVars[c] = v?.variacao || 0; });
+            if (sortMode === 'total') centros.sort((a, b) => (totais[b] || 0) - (totais[a] || 0));
+            else if (sortMode === 'variacao') centros.sort((a, b) => lastVars[b] - lastVars[a]);
+            else centros.sort();
+            document.getElementById('variacao-kpi-grid').innerHTML = centros.map(cent => {
+                const pal = PALETTE[cent] || { primary: '#94a3b8', light: '#f1f5f9' };
+                const v = DataEngine.variacaoSemanal(cent).filter(x => x.variacao !== null);
+                const last = v.slice(-1)[0]; const avg = v.reduce((a, x) => a + x.variacao, 0) / (v.length || 1);
+                const sign = last?.variacao >= 0 ? 'up' : 'down', arrow = last?.variacao >= 0 ? '↑' : '↓';
+                return `<div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+      <div class="kpi-card-header"><span class="kpi-label">Centro ${cent}</span><div class="kpi-icon">📉</div></div>
+      <div class="kpi-value" style="font-size:22px">${fmtH(totais[cent] || 0)}<small>h</small></div>
+      <div class="kpi-trend ${sign}" style="margin-top:6px">${arrow} ${Math.abs(last?.variacao || 0).toFixed(1)}% últ.sem. <span style="color:#94a3b8;font-weight:400;margin-left:4px">· avg ${avg >= 0 ? '+' : ''}${avg.toFixed(1)}%</span></div>
+    </div>`;
+            }).join('');
+            const area = document.getElementById('variacao-charts-area');
+            const rows = []; for (let i = 0; i < centros.length; i += 2) {
+                const pair = centros.slice(i, i + 2);
+                rows.push(`<div class="chart-row cols-2">${pair.map(cent => `<div class="chart-card"><div class="chart-card-header"><div><div class="chart-card-title">Variação % — Centro ${cent}</div><div class="chart-card-sub">${CENTRO_LABELS[cent] || cent} · verde=crescimento</div></div></div><div class="chart-wrap" style="height:260px"><canvas id="chart-var-${cent}"></canvas></div></div>`).join('')}</div>`);
+            }
+            area.innerHTML = rows.join('');
+            setTimeout(() => { centros.forEach(c => ChartModule.renderVariacao(`chart-var-${c}`, c)); }, 50);
+        }
+
+        // ── CAPACIDADE ────────────────────────────────────
+        let capacidadeRendered = false;
+        function renderCapacidadePage(force = false) {
+            if (capacidadeRendered && !force) return; capacidadeRendered = true;
+            if (document.getElementById('cap-sem-ini').options.length === 1) { populateSemanasSelect('cap-sem-ini'); populateSemanasSelect('cap-sem-fin'); }
+            const cf = document.getElementById('cap-cent-filter')?.value || '';
+            const thr = parseFloat(document.getElementById('cap-threshold')?.value || '100');
+            const allS = DataEngine.getSemanas();
+            const ini = document.getElementById('cap-sem-ini')?.value || '', fin = document.getElementById('cap-sem-fin')?.value || '';
+            const iniI = ini ? allS.indexOf(ini) : 0, finI = fin ? allS.indexOf(fin) : allS.length - 1;
+            const semanas = allS.slice(Math.max(0, iniI), finI + 1);
+            let centros = DataEngine.getCentros(); if (cf) centros = centros.filter(c => c === cf);
+            const util = DataEngine.utilizacaoPorCentroSemana();
+            document.getElementById('cap-kpi-grid').innerHTML = centros.map(cent => {
+                const pal = PALETTE[cent] || { primary: '#94a3b8', light: '#f1f5f9' };
+                const vals = semanas.map(s => util[cent]?.[s]).filter(v => v !== null && v !== undefined);
+                const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+                const maxU = vals.length ? Math.max(...vals) : 0;
+                const alerts = semanas.filter(s => (util[cent]?.[s] || 0) > thr).length;
+                const color = avg > thr ? '#dc2626' : avg > 80 ? '#d97706' : '#059669';
+                return `<div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
+      <div class="kpi-card-header"><span class="kpi-label">Centro ${cent}</span><div class="kpi-icon">⚙️</div></div>
+      <div class="kpi-value" style="font-size:22px;color:${color}">${avg.toFixed(1)}<small>%</small></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Pico: ${maxU.toFixed(1)}% · Alertas: <b style="color:${alerts > 0 ? '#dc2626' : '#059669'}">${alerts}</b> sem.</div>
+    </div>`;
+            }).join('');
+            const area = document.getElementById('cap-charts-area');
+            const rows = []; for (let i = 0; i < centros.length; i += 2) {
+                const pair = centros.slice(i, i + 2);
+                rows.push(`<div class="chart-row cols-2">${pair.map(cent => `<div class="chart-card"><div class="chart-card-header"><div><div class="chart-card-title">Utilização — Centro ${cent}</div><div class="chart-card-sub">${CENTRO_LABELS[cent] || cent} · vermelho = acima de ${thr}%</div></div></div><div class="chart-wrap" style="height:300px"><canvas id="chart-cap-${cent}"></canvas></div></div>`).join('')}</div>`);
+            }
+            area.innerHTML = rows.join('');
+            setTimeout(() => {
+                centros.forEach(cent => {
+                    ChartModule.destroy(`chart-cap-${cent}`);
+                    const ctx = document.getElementById(`chart-cap-${cent}`); if (!ctx) return;
+                    const vals = semanas.map(s => util[cent]?.[s] ?? null);
+                    const pal = PALETTE[cent] || PALETTE['1200'];
+                    ChartModule.instances[`chart-cap-${cent}`] = new Chart(ctx, {
+                        data: {
+                            labels: semanas, datasets: [
+                                { type: 'bar', label: 'Utilização %', data: vals, backgroundColor: vals.map(v => v === null ? '#e5e7eb99' : v > thr ? '#ef4444cc' : v > 80 ? '#f59e0bcc' : pal.primary + 'cc'), borderRadius: 5, borderWidth: 0, order: 1 },
+                                { type: 'line', label: `Limite ${thr}%`, data: semanas.map(() => thr), borderColor: '#ef4444', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false, order: 0 }
+                            ]
+                        }, options: { ...ChartModule.globalOptions(), plugins: { ...ChartModule.globalOptions().plugins, tooltip: { ...ChartModule.globalOptions().plugins.tooltip, mode: 'index', callbacks: { label(c) { if (c.parsed.y === null) return ' Sem dados'; return ` ${c.dataset.label}: ${c.parsed.y.toFixed(1)}%`; } } } }, scales: { x: ChartModule.globalOptions().scales.x, y: { ...ChartModule.globalOptions().scales.y, ticks: { ...ChartModule.globalOptions().scales.y.ticks, callback(v) { return v + '%'; } } } } }
+                    });
+                });
+            }, 50);
+        }
+
+        // ── TABELA ────────────────────────────────────────
+        let tabelaRendered = false;
+        function renderTabelaPage() {
+            if (tabelaRendered) return; tabelaRendered = true;
+            populateSemanasSelect('table-sem-filter');
+            tableData = [...DataEngine.getRaw()]; renderTable();
+        }
+        function resetTableFilter() {
+            ['table-search', 'table-cent-filter', 'table-sem-filter', 'table-hmin-filter', 'table-cap-filter'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = el.tagName === 'INPUT' ? '' : '';
+            });
+            document.getElementById('table-hmin-filter').value = '0';
+            filterTable();
+        }
+        function filterTable() {
+            const search = document.getElementById('table-search').value.toLowerCase();
+            const cent = document.getElementById('table-cent-filter').value;
+            const sem = document.getElementById('table-sem-filter').value;
+            const hmin = parseFloat(document.getElementById('table-hmin-filter').value || '0');
+            const capF = document.getElementById('table-cap-filter').value;
+            tableData = DataEngine.getRaw().filter(d => {
+                if (search && !d.CenTrab.toLowerCase().includes(search) && !d.Cent.toLowerCase().includes(search)) return false;
+                if (cent && d.Cent !== cent) return false;
+                if (sem && d.Semana !== sem) return false;
+                if (d.tempo < hmin) return false;
+                if (capF === 'com' && !(d.capacidade > 0)) return false;
+                if (capF === 'sem' && d.capacidade > 0) return false;
+                if (capF === 'over' && !(d.capacidade > 0 && d.tempo > d.capacidade)) return false;
+                return true;
+            });
+            sortAndRender();
+        }
+        function sortTable(key) { if (tableSortKey === key) tableSortDir *= -1; else { tableSortKey = key; tableSortDir = -1; } sortAndRender(); }
+        function sortAndRender() {
+            tableData.sort((a, b) => { const av = a[tableSortKey], bv = b[tableSortKey]; if (typeof av === 'number') return (av - bv) * tableSortDir; return String(av).localeCompare(String(bv)) * tableSortDir; });
+            renderTable();
+        }
+        function renderTable() {
+            const maxT = Math.max(...tableData.map(d => Number(d.tempo) || 0), 1);
+            const totalH = tableData.reduce((s, d) => s + (Number(d.tempo) || 0), 0);
+
+            // Replicando a defesa absoluta na contagem do card da tabela
+            const uniqueCaps = {};
+            tableData.forEach(d => {
+                const key = `${d.Cent}_${d.Semana}_${String(d.CenTrab).trim()}`;
+                const cap = Number(d.capacidade) || 0;
+                if (!uniqueCaps[key] || cap > uniqueCaps[key]) {
+                    uniqueCaps[key] = cap;
+                }
+            });
+            const totalCap = Object.values(uniqueCaps).reduce((s, val) => s + val, 0);
+
+            document.getElementById('table-count').textContent = tableData.length.toLocaleString('pt-BR');
+            document.getElementById('table-total-h').textContent = fmtH(totalH) + 'h';
+            document.getElementById('table-total-cap').textContent = fmtH(totalCap) + 'h';
+
+            const MAX = 500, shown = tableData.slice(0, MAX);
+            document.getElementById('table-body').innerHTML = shown.map(d => {
+                const pal = PALETTE[d.Cent] || { primary: '#94a3b8', light: '#f1f5f9' };
+                const barW = (d.tempo / maxT * 100).toFixed(1);
+                const cap = d.capacidade || 0, util = cap > 0 ? (d.tempo / cap * 100) : null;
+                const sc = util === null ? '#94a3b8' : util > 100 ? '#dc2626' : util > 80 ? '#d97706' : '#059669';
+                const st = util === null ? '–' : util > 100 ? `▲ ${util.toFixed(0)}%` : util > 80 ? `⚠ ${util.toFixed(0)}%` : `✓ ${util.toFixed(0)}%`;
+                return `<tr>
+      <td class="mono">${d.Semana}</td>
+      <td><span class="badge-cent" style="background:${pal.light};color:${pal.primary}">${d.Cent}</span></td>
+      <td class="mono">${d.CenTrab}</td>
+      <td class="mono" style="font-weight:600;color:${pal.primary}">${fmtH(d.tempo)}h</td>
+      <td class="mono" style="color:var(--text-secondary)">${cap > 0 ? fmtH(cap) + 'h' : '–'}</td>
+      <td><div class="mini-bar-wrap"><div class="mini-bar-bg"><div class="mini-bar" style="width:${barW}%;background:${pal.primary}"></div></div><span style="font-size:11px;color:#94a3b8">${barW}%</span></div></td>
+      <td><span style="font-size:12px;font-weight:700;color:${sc}">${st}</span></td>
+    </tr>`;
+            }).join('') + (tableData.length > MAX ? `<tr><td colspan="7" style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">Mostrando ${MAX} de ${tableData.length} registros. Use os filtros.</td></tr>` : '');
+        }
+        // ── Init ─────────────────────────────────────────
+        window.addEventListener('DOMContentLoaded', () => renderOverviewPage());
+        window.showPage = showPage; window.selectCentro = selectCentro;
+        window.renderCentroDetail = renderCentroDetail; window.renderRankingPage = renderRankingPage;
+        window.renderHeatmapPage = renderHeatmapPage; window.renderHeatmapSemana = renderHeatmapSemana;
+        window.filterTable = filterTable; window.sortTable = sortTable;
+        window.toggleCentroLine = toggleCentroLine; window.applyOverviewFilter = applyOverviewFilter;
+        window.resetOverviewFilter = resetOverviewFilter; window.renderComparativoCharts = renderComparativoCharts;
+        window.renderVariacaoPage = renderVariacaoPage; window.renderCapacidadePage = renderCapacidadePage;
+        window.resetTableFilter = resetTableFilter;
+    </script>
+</body>
+
+</html>
