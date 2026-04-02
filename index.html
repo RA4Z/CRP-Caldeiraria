@@ -10,6 +10,10 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap"
         rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <script>
+        // Flag global de capacidade (Controla todo o sistema via data.js)
+        window.globalCapacityMode = 'real';
+    </script>
     <script src="data.js"></script>
     <script src="charts.js"></script>
     <style>
@@ -941,7 +945,17 @@
                 <div class="header-title" id="headerTitle">Visão Geral da Caldeiraria</div>
                 <div class="header-sub" id="headerSub">Semanas 14–19 · 4 Centros · Horas + Capacidade</div>
             </div>
-            <div class="header-right">
+            
+            <div class="header-right" style="display:flex; align-items:center; gap: 16px;">
+                <!-- TOGGLE DE MODO DE CAPACIDADE -->
+                <label class="filter-group" style="margin:0; background:var(--bg); border-color:var(--border)">
+                    <span class="filter-label">Modo Capacidade</span>
+                    <select class="filter-select" id="global-cap-mode" onchange="toggleCapacityMode()">
+                        <option value="real">Real (Variável)</option>
+                        <option value="media">Média (Reta)</option>
+                    </select>
+                </label>
+
                 <div class="header-badge">
                     <div class="pulse-dot"></div>Dados Atualizados
                 </div>
@@ -1363,6 +1377,18 @@
         let tableData = [], tableSortKey = 'tempo', tableSortDir = -1;
         let lineMode = 'all', centroLineVisible = {};
 
+        // Recarrega todos os gráficos quando muda a FLAG DE MODO
+        function toggleCapacityMode() {
+            window.globalCapacityMode = document.getElementById('global-cap-mode').value;
+            // Destroi sinalizadores para forçar redesenho na aba ativa e nas outras
+            overviewRendered = false;
+            centrosPageRendered = false;
+            comparativoRendered = false;
+            capacidadeRendered = false;
+            // Recarrega a tela atual para aplicar visualmente
+            showPage(currentPage);
+        }
+
         function showPage(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -1392,8 +1418,9 @@
         let overviewRendered = false;
         function renderOverviewPage() {
             if (overviewRendered) return; overviewRendered = true;
-            populateSemanasSelect('ov-sem-filter');
-            DataEngine.getCentros().forEach(c => { document.getElementById('ov-cent-filter').innerHTML += `<option value="${c}">${c} – ${CENTRO_LABELS[c] || c}</option>`; });
+            if(document.getElementById('ov-sem-filter').options.length === 1) populateSemanasSelect('ov-sem-filter');
+            if(document.getElementById('ov-cent-filter').options.length === 1) DataEngine.getCentros().forEach(c => { document.getElementById('ov-cent-filter').innerHTML += `<option value="${c}">${c} – ${CENTRO_LABELS[c] || c}</option>`; });
+            
             const centros = DataEngine.getCentros(), semanas = DataEngine.getSemanas();
             const totais = DataEngine.totalPorCentro(), capTotais = DataEngine.capacidadeTotalPorCentro();
             const grandTotal = Object.values(totais).reduce((a, b) => a + b, 0);
@@ -1401,6 +1428,7 @@
             const config = [{ cent: '1200', icon: '🔩', label: 'Caldeiraria JGS' }, { cent: '1201', icon: '⚙️', label: 'Caldeiraria SBC' },
             { cent: '3201', icon: '🛠️', label: 'Caldeiraria WEM' }, { cent: '6200', icon: '🏗️', label: 'Caldeiraria WII' },
             { cent: 'all', icon: '📊', label: 'Total Geral' }];
+            
             document.getElementById('kpi-grid').innerHTML = config.map(({ cent, icon, label }) => {
                 const pal = PALETTE[cent] || { primary: '#1a56db', light: '#ebf2ff' };
                 const total = cent === 'all' ? grandTotal : (totais[cent] || 0);
@@ -1572,7 +1600,7 @@
         let comparativoRendered = false;
         function renderComparativoPage() {
             if (comparativoRendered) return; comparativoRendered = true;
-            populateSemanasSelect('comp-sem-ini'); populateSemanasSelect('comp-sem-fin');
+            if(document.getElementById('comp-sem-ini').options.length === 1) { populateSemanasSelect('comp-sem-ini'); populateSemanasSelect('comp-sem-fin'); }
             DataEngine.getCentros().forEach(c => { centroLineVisible[c] = true; const btn = document.getElementById(`btn-toggle-${c}`); if (btn) btn.classList.add('active'); });
             renderComparativoCharts();
         }
@@ -1857,7 +1885,7 @@
         window.toggleCentroLine = toggleCentroLine; window.applyOverviewFilter = applyOverviewFilter;
         window.resetOverviewFilter = resetOverviewFilter; window.renderComparativoCharts = renderComparativoCharts;
         window.renderVariacaoPage = renderVariacaoPage; window.renderCapacidadePage = renderCapacidadePage;
-        window.resetTableFilter = resetTableFilter;
+        window.resetTableFilter = resetTableFilter; window.toggleCapacityMode = toggleCapacityMode;
     </script>
 </body>
 

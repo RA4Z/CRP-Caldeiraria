@@ -40,21 +40,19 @@ const DataEngine = {
     },
 
     // ---------------------------------------------------------
-    // CORAÇÃO DA CORREÇÃO: Mapeia a capacidade ÚNICA por CT
+    // Mapeia a capacidade ÚNICA por CT
     // ---------------------------------------------------------
     capacidadeUnicaMap() {
         const uniqueCaps = {};
         for (const d of RAW_DATA) {
             const cent = d.Cent;
             const sem = d.Semana;
-            const ct = String(d.CenTrab).trim(); // Remove espaços que causariam duplicação
+            const ct = String(d.CenTrab).trim();
             const cap = Number(d.capacidade) || 0;
 
             if (!uniqueCaps[cent]) uniqueCaps[cent] = {};
             if (!uniqueCaps[cent][sem]) uniqueCaps[cent][sem] = {};
             
-            // Defesa absoluta: Pega sempre o MAIOR valor reportado para aquele CT.
-            // Ignora linhas repetidas do mesmo CT.
             if (!uniqueCaps[cent][sem][ct] || cap > uniqueCaps[cent][sem][ct]) {
                 uniqueCaps[cent][sem][ct] = cap;
             }
@@ -62,13 +60,34 @@ const DataEngine = {
         return uniqueCaps;
     },
 
+    // ---------------------------------------------------------
+    // CORAÇÃO DA NOVA REGRA (MÉDIA GLOBAL)
+    // ---------------------------------------------------------
     capacidadePorCentroSemana() {
         const uniqueCaps = this.capacidadeUnicaMap();
         const result = {};
+        const semanas = this.getSemanas();
+        
+        // Verifica se a flag global do sistema foi ativada para "Média"
+        const isMedia = window.globalCapacityMode === 'media';
+
         for (const cent in uniqueCaps) {
             result[cent] = {};
+            let totalCent = 0;
+
+            // Primeiro calcula o real de cada semana
             for (const sem in uniqueCaps[cent]) {
-                result[cent][sem] = Object.values(uniqueCaps[cent][sem]).reduce((a, b) => a + b, 0);
+                const capSem = Object.values(uniqueCaps[cent][sem]).reduce((a, b) => a + b, 0);
+                result[cent][sem] = capSem;
+                totalCent += capSem;
+            }
+
+            // Se o modo for média, sobrescrevemos os valores reais com a média reta
+            if (isMedia) {
+                const avg = totalCent / semanas.length;
+                for (const sem of semanas) {
+                    result[cent][sem] = avg; 
+                }
             }
         }
         return result;
@@ -93,7 +112,6 @@ const DataEngine = {
         }
         return result;
     },
-    // ---------------------------------------------------------
 
     agregadoPorCenTrabSemana(cent) {
         const result = {};
