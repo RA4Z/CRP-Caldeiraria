@@ -977,8 +977,11 @@
                     <div class="chart-card-header">
                         <div>
                             <div class="chart-card-title">Evolução Semanal de Horas</div>
-                            <div class="chart-card-sub">Barras = horas realizadas · linha vermelha tracejada =
-                                capacidade</div>
+                            <div class="chart-card-sub">Barras = horas realizadas · linha vermelha tracejada = capacidade</div>
+                        </div>
+                        <!-- Badge visível apenas quando o JGS (1200) for selecionado nos filtros -->
+                        <div id="badge-atraso-main-chart" style="display:none; align-items:center; background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; white-space:nowrap; box-shadow:var(--shadow-sm);">
+                            ⚠️ Atraso: 13.600h
                         </div>
                     </div>
                     <div class="chart-wrap" style="height:340px"><canvas id="chart-line-overview"></canvas></div>
@@ -1413,7 +1416,13 @@
                 }
                 const utilHtml = util !== null ? `<div style="margin-top:6px;font-size:11px;color:${util > 100 ? '#dc2626' : util > 80 ? '#d97706' : '#059669'};font-weight:600">⚙️ ${util.toFixed(1)}% cap. utilizada</div>` : '';
                 return `<div class="kpi-card" style="--card-accent:${pal.primary};--card-icon-bg:${pal.light}">
-      <div class="kpi-card-header"><span class="kpi-label">${label}</span><div class="kpi-icon">${icon}</div></div>
+      <div class="kpi-card-header">
+        <span class="kpi-label">${label}</span>
+        <div style="display:flex; align-items:center; gap:8px;">
+          ${cent === '1200' ? `<div style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:700;white-space:nowrap;box-shadow:var(--shadow-sm);">⚠️ Atraso: 13.600h</div>` : ''}
+          <div class="kpi-icon">${icon}</div>
+        </div>
+      </div>
       <div class="kpi-value">${fmtH(total)}<small>h</small></div>
       ${trendHtml}${utilHtml}
       ${cent !== 'all' ? `<div class="kpi-sparkline"><canvas id="spark-${cent}"></canvas></div>` : `<div class="kpi-trend neutral" style="margin-top:8px">Média: ${fmtH(media)}h/sem</div>`}
@@ -1425,13 +1434,16 @@
             renderOverviewStacked();
             renderRankingCentrosChart();
         }
+        
         function applyOverviewFilter() { lineMode = document.getElementById('ov-mode-filter').value; renderOverviewLine(); }
+        
         function resetOverviewFilter() {
             document.getElementById('ov-sem-filter').value = '';
             document.getElementById('ov-cent-filter').value = '';
             document.getElementById('ov-mode-filter').value = 'all';
             lineMode = 'all'; renderOverviewLine();
         }
+        
         function renderOverviewLine() {
             ChartModule.destroy('chart-line-overview');
             const ctx = document.getElementById('chart-line-overview'); if (!ctx) return;
@@ -1441,6 +1453,13 @@
             const sf = document.getElementById('ov-sem-filter')?.value || '';
             const fSems = sf ? semanas.filter(s => s === sf) : semanas;
             const fCents = cf ? centros.filter(c => c === cf) : centros;
+            
+            // Controle da exibição da Badge de Atraso do JGS no Gráfico Central
+            const atrasoBadge = document.getElementById('badge-atraso-main-chart');
+            if (atrasoBadge) {
+                atrasoBadge.style.display = (cf === '1200') ? 'flex' : 'none';
+            }
+
             if (lineMode === 'all') {
                 const totals = fSems.map(s => fCents.reduce((sum, c) => sum + (agg[c]?.[s] || 0), 0));
                 const caps = fSems.map(s => fCents.reduce((sum, c) => sum + (capAgg[c]?.[s] || 0), 0));
