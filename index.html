@@ -12,7 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script>
         // Flag global de capacidade (Controla todo o sistema via data.js)
-        window.globalCapacityMode = 'real';
+        window.globalCapacityMode = 'media';
     </script>
     <script src="data.js"></script>
     <script src="charts.js"></script>
@@ -951,8 +951,8 @@
                 <label class="filter-group" style="margin:0; background:var(--bg); border-color:var(--border)">
                     <span class="filter-label">Modo Capacidade</span>
                     <select class="filter-select" id="global-cap-mode" onchange="toggleCapacityMode()">
-                        <option value="real">Real (Variável)</option>
                         <option value="media">Média (Reta)</option>
+                        <option value="real">Real (Variável)</option>
                     </select>
                 </label>
 
